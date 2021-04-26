@@ -9,7 +9,7 @@
 #include "../file_manager/manager.h"
 
 
-// INTENTO DE GIT
+// INTENTO DE GIT 
 Queue* init_queues(Queue** queues, int Q, int q){
   // Generar la cantidad Q de colas y guardarlas en el array de colas
   for (int j = 0; j < Q; j++){
