@@ -14,6 +14,7 @@ typedef struct process {
   int chosen;
   int interrupted;
   int first_time;
+  int end_time;
 } Process;
 
 typedef struct queue {

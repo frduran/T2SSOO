@@ -27,6 +27,14 @@ Queue* init_queues(Queue** queues, int Q, int q){
   return queues;
 }
 
+Queue* delete_process(Queue* queue, int pos){
+  // for (int i=0; i<queue->length; i++){
+  //   queue->process_queue[i-1] = queue->process_queue[i];
+  // }
+  memcpy (queue->process_queue, queue->process_queue+1, sizeof(Process*));
+  print_queue(queue);
+}
+
 int main(int argc, char **argv)
 {
   char* input_path = argv[1];
@@ -59,6 +67,7 @@ int main(int argc, char **argv)
     process->chosen = 0;
     process->interrupted = 0;
     process->first_time = 0;
+    process->end_time = 0;
     Queue* queue = queues[0];
     add_process(queue, process);
 
@@ -67,12 +76,35 @@ int main(int argc, char **argv)
   // Ejecutar procesos hasta que todos hayan terminado
   }
   print_queue(queues[0]);
+  int timer = 0;
   while(finished < total){
     Queue* most_prior = queues[0];
     Process* current = most_prior->process_queue[0];
-    printf("cycles %d", current->cycles);
-    // Si cycles es mayor a quantum, ejecuta quantum y lo sacan de la cola
+    printf("cycles %d, quantum %d", current->cycles, most_prior->quantum);
     
+    // Si cycles es mayor a quantum, ejecuta quantum y lo sacan de la cola
+    if (current->cycles >= most_prior->quantum){
+      timer += current->cycles;
+      current->status="RUNNING";
+      current->status="FINISHED";
+      finished_p[finished] = current;
+      finished++; 
+      printf("name %s", finished_p[0]->name);
+    }
+    else {
+      timer += most_prior->quantum;
+      printf("---MOST PRIOR1\n");
+      print_queue(most_prior);
+      add_process(queues[1], current);
+      delete_process(most_prior, 1);
+      printf("MOST PRIOR2");
+      print_queue(most_prior);
+      printf("NEXT MOST PRIOR");
+      print_queue(queues[1]);
+      finished_p[finished] = current;
+      printf("name %s", finished_p[0]->name);
+    }
+
 
     // Sino, ejecuta cycles y termina
     break;
