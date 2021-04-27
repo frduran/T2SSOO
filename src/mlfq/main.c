@@ -151,8 +151,12 @@ int main(int argc, char **argv)
   
   int finished = 0; // contador de los procesos terminados
 
+  FIB_HEAP *heap;
+  heap = make_fib_heap();
   // Inicializar los procesos, leídos del archivo input
   for (int i = 0; i < total; i++) {
+    fib_node *new_node;
+    new_node = (fib_node *)malloc(sizeof(fib_node));
     char** line = input->lines[i];
     Process* process = calloc(1, sizeof(Process));
     process->pid = atoi(line[1]);
@@ -168,10 +172,34 @@ int main(int argc, char **argv)
     process->first_wait = 0;
     process->first_time = 0;
     process->end_time = 0;
-    Queue* queue = queues[0];
-    append(queue, process);
+    new_node->process = process;
+    insertion(heap, new_node, process->start_time);
+    // Queue* queue = queues[0];
+    // append(queue, process);
   }
-  printList(queues[0]->head);
+  //Ahora guardamos los procesos ya ordenados en el heap en la cola de primera prioridad
+  for (int j = 0; j < total; j++){
+    fib_node *extracted = extract_min(heap);
+    append(queues[0], extracted->process);
+    free(extracted);
+  }
+  free(heap);
+  //Prints para comprobar que funciona el fibonacci heap
+  // print_heap(heap->min);
+  // fib_node *extracted = extract_min(heap);
+  // printf("Extracted %s\n", extracted->process->name);
+  // free(extracted);
+  // print_heap(heap->min);
+  // fib_node *extracted2 = extract_min(heap);
+  // printf("Extracted %s\n", extracted2->process->name);
+  // free(extracted2);
+  // print_heap(heap->min);
+  // fib_node *extracted3 = extract_min(heap);
+  // printf("Extracted %s\n", extracted3->process->name);
+  // free(extracted3);
+  // print_heap(heap->min);
+
+  // printList(queues[0]->head);
   // sortQueue(queues[0]);
 
   int timer = 0;
@@ -285,8 +313,10 @@ int main(int argc, char **argv)
       }
     }
     // Si cycles es menor a quantum, ejecuta cycles y termina 
+
     else if (current->cycles <= queues[j]->quantum){
       if(current->first_time = 0){
+
         current->first_time = timer;
       }
       // Avanzar reloj del sistema
@@ -339,6 +369,7 @@ int main(int argc, char **argv)
     args_to_file[2] = pr->interrupted;
     args_to_file[3] = turnaround_time(pr); // calcular turnaround
     args_to_file[4] = response_time(pr); // calcular response time
+
     args_to_file[5] = pr->total_time_waiting; // calcular waiting time
     printf("---->%s,%d,%d,%d,%d,%d\n", args_to_file[0], args_to_file[1], args_to_file[2], args_to_file[3], args_to_file[4],args_to_file[5] );
     
