@@ -10,6 +10,11 @@
 #include "../file_manager/manager.h"
 
 
+/* FALTA INTEGRAR LÓGICA DE PERIODO EN EL CUAL PASAN A COLA DE MAYOR PRIORIDAD
+   CALCULO DE WAITING TIME Y TAMBIÉN WAIT Y WAITING_DELAY QUE SE DA COMO ATRIBUTO
+   DE UN PROCESO */
+
+
 Queue** init_queues(Queue** queues, int Q, int q){
   // Generar la cantidad Q de colas y guardarlas en el array de colas
   for (int j = 0; j < Q; j++){
@@ -188,6 +193,8 @@ int main(int argc, char **argv)
     args_to_file[4] = response_time(pr); // calcular response time
     args_to_file[5] = 0; // calcular waiting time
     printf("---->%s,%d,%d,%d,%d,%d\n", args_to_file[0], args_to_file[1], args_to_file[2], args_to_file[3], args_to_file[4],args_to_file[5] );
+    
+    // ------------- No me está funcionando la escritura
     //concat_array(args_to_file);
     //write_output(output_path, args_to_file);
   }
