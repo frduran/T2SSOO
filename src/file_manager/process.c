@@ -245,6 +245,7 @@ void append(Queue* queue, Process* process)
  
     /* 6. Change the next of last node */
     last->next = new_node;
+
     // printf("AQQQQQQ");
     // Node* new_tail = calloc(1,sizeof(Node));
     // last->next = new_tail;
@@ -262,7 +263,7 @@ void printList(Node* node)
 {
   if (node->value == 1){
     while (node != NULL) {
-        printf(" %s, STATUS: %s\n ", node->process->name, node->process->status);
+        printf("%s, STATUS: %s\n", node->process->name, node->process->status);
         //printf("next value %d ", node->next->value);
         node = node->next;
     }
@@ -296,51 +297,34 @@ void deleteHead(Queue* queue){
 
 void deleteNode(Node* node, Queue* queue){
   // NO ES EL ÚLTIMO
-  // if (node->next != NULL){
-  //   printf("next: %s", node->next->process->name);
-  // }
-  // else {
-  //   printf("next is null");
-  // }
-  if (node->next != NULL){
-    printf("Entré al if1, no soy el ultimo\n");
-    // // Está inicializado el siguiente
-    // if (node->next->value ==1){
 
+  if (node->next != NULL){
+    // // Está inicializado el siguiente
       // NI ES EL PRIMERO = ES UNO DE AL MEDIO
-      if (node->prev != NULL){ //} && node->prev->value == 1){
-        printf("Entré al if2, no soy cabeza\n");
+      if (node->prev != NULL){ 
         node->prev->next = node->next;
         node->next->prev = node->prev;
 
       }
       // O ES LA CABEZA
       else {
-        printf("Entré al if3, si soy cabeza\n");
         node->next->prev = NULL;
         queue->head = node->next;
       }
 
   //     //free(node);
   }
-  //   // else {
-  //   //   Node* new_node = calloc(1,sizeof(Node));
-  //   //   new_node->value = 0;
-  //   //   queue->head = new_node;
-  //   // }
-  // // }
+
 
   // ES LA COLA
   else {
     // SI TAMBIEN SOY LA CABEZA, ES DECIR SOY EL UNICO ELEMENTO:
     if (node->prev == NULL){
-      printf("Entré al if4, soy el unicooooo\n");
       Node* new_node = calloc(1,sizeof(Node));
       new_node->value = 0;
       queue->head = new_node;
     }
     else {
-       printf("Entré al if5, soy el ultimo\n");
       node->prev->next = NULL;
     }
    

@@ -10,34 +10,58 @@
 #include "../file_manager/manager.h"
 
 
-/* FALTA INTEGRAR ESCRITURA DE ARCHIVO, SORT, LÓGICA DE PERIODO EN EL CUAL PASAN A COLA DE MAYOR PRIORIDAD
-   CALCULO DE WAITING TIME Y TAMBIÉN WAIT Y WAITING_DELAY QUE SE DA COMO ATRIBUTO
-   DE UN PROCESO */
+/* FALTA INTEGRAR ESCRITURA DE ARCHIVO, SORT  */
 
+// Función que appendea todos los procesos de las colas 1...última a la cola 0, de mayor prioridad
+Queue** update_S(Queue** queues, int total, int S, int S_passed){
+  printf("////////////////////////////////////// Pasó tiempo S, subir todos a cola 0S\n");
+  // Si es que hay más de 1 cola:
+  if (total>=1){
+
+    for (int i=1; i<total; i++){
+      printList(queues[i]->head);
+      Node* check = queues[i]->head;
+      // Si es que el nodo está inicializado
+      if (check->value != 0){
+        while (true){
+          // Appendea el nodo a la cola 0 y lo elimina
+          append(queues[0], check->process);
+          deleteNode(check,queues[i]);  
+          if (check->next != NULL){
+            check = check->next;
+          }
+          else {
+            break;
+          }   
+        }
+      }
+    }
+  }
+  return queues;
+}
+
+// Revisa todos los procesos y el tiempo que llevan esperando, comparando con waiting_cycle
+// Si el proceso ya completó el waiting cycle, lo pasa a READY
 Queue** update_waiting(Queue** queues, int total, int timer){
-  printf("//////////////////////////////////////vamos a actualizar los waiting\n");
+  printf("////////////////////////////////////// Chequear procesos waiting\n");
   for (int i=0; i<total; i++){
     printf("Cola %d\n", i);
     printList(queues[i]->head);
     Node* check = queues[i]->head;
     if (check->value != 0){
       while (true){
-      
-      if (check->process->status == "WAITING"){
-        printf("!!FIRST WAIT=%d", check->process->first_wait);
-        int dif = timer - check->process->first_wait;
-        printf("este proceso están en waiting desde %d, ha pasado %d", check->process->first_wait, dif);
 
+      // Solo chequea a los procesos con status WAITING
+      if (check->process->status == "WAITING"){
+        int dif = timer - check->process->first_wait;
+        // Si completó su waiting delay, lo pasa a READY
         if (dif > check->process->waiting_delay){
           check->process->total_time_waiting += check->process->waiting_delay;
           check->process->status="READY";
           printf("proceso %s pasa a ready", check->process->name);
         }
-        else {
-          check->process->total_time_waiting += dif;
-        }
       } 
-      
+      // Si no era el último nodo, avanza al siguiente
       if (check->next != NULL){
         check = check->next;
       }
@@ -49,15 +73,15 @@ Queue** update_waiting(Queue** queues, int total, int timer){
     
     
   }
-  printf("//////////////////////////////////////terminado de actualizar los waiting\n");
+  printf("//////////////////////////////////////Terminé de actualizar los waiting\n");
   return queues;
 }
 
+// Inicializa todas las colas señaladas
 Queue** init_queues(Queue** queues, int Q, int q){
-  // Generar la cantidad Q de colas y guardarlas en el array de colas
+  // Genera la cantidad Q de colas y las guarda en el array de colas
   for (int j = 0; j < Q; j++){
     int quantum = (Q - j) * q;
-    // Process** process_queue = calloc(255, sizeof(Process*));
     Queue* queue = calloc(1, sizeof(Queue));
     Node* node = calloc(1,sizeof(Node));
     queue->Q = Q;
@@ -67,7 +91,6 @@ Queue** init_queues(Queue** queues, int Q, int q){
     queue->q = q;
     queue->quantum = quantum;
     queue->length = 0;
-    // queue->process_queue = process_queue;
     queues[j] = queue;
   }
   return queues;
@@ -110,14 +133,6 @@ int turnaround_time(Process* process){
   return end-arrive;
 }
 
-// void delete_process(Queue* queue, int pos){
-//   // for (int i=0; i<queue->length; i++){
-//   //   queue->process_queue[i-1] = queue->process_queue[i];
-//   // }
-//   memcpy (queue->process_queue, queue->process_queue+1, sizeof(Process*));
-//   print_queue(queue);
-// }
-
 int main(int argc, char **argv)
 {
   char* input_path = argv[1];
@@ -158,30 +173,33 @@ int main(int argc, char **argv)
   }
   printList(queues[0]->head);
   // sortQueue(queues[0]);
-  // printList(queues[0]->head);
 
   int timer = 0;
+  int S_passed = 0;
 
   //////////////////////////////////////////////////////////////////////////////////////7
   // Ejecutar procesos hasta que todos hayan terminado
   while(finished < total){
+    // for (int i=0; i<total; i++){
+    //   printf("inicio de while---timer = %d,Cola %d\n", timer,i);
+    //   printList(queues[i]->head);
+    // }
     int j=0;
     Process* current;
     Node* current_node;
-    printf("\n////TIMER: %d", timer);
+    printf("\n////TIMER: %d, S_passed %d", timer, S_passed);
     // Chequear que cola ejecutar
     
     Queue* exe = queues[j];
     while(true){
       printf("***CHEQUEANDO COLA %d\n", j);
-      // Revisar todos los nodos y actualizar a los waiting
-
       // Cola tiene cabeza
       int forward = 0;
       printf("queue %d, head: %d\n", j, queues[j]->head->value);
       
       if (queues[j]->head->value == 1){
-        // Revisar si hay algún proceso en estado READY
+        
+        // Revisa si hay algún proceso en estado READY
         Node* check = queues[j]->head;
         while (true){
           
@@ -191,11 +209,11 @@ int main(int argc, char **argv)
             printf("NODE %s IS READY\n", current->name);
             break;
           } 
-          // SI NO ERA EL ÚLTIMO DE LA COLA
+          // Si no está en ready y no era el último, avanza al siguiente
           else if (check->next != NULL){
             printf("PROCESO %s ESTÁ EN PROCESO WAITING\n", check->process->name);
             check = check->next;
-          // SI ERA EL ÚLTIMO, BREAK Y CHEQUEAR LA SIGUIENTE COLA
+          // Si era el último, break y avanza a siguiente cola
           } else {
             forward = 1;
             break;
@@ -214,7 +232,6 @@ int main(int argc, char **argv)
         j++;
       }
     }
-    // Process* current = queues[j]->head->process;
     printf("cycles %d, quantum %d\n", current->cycles, queues[j]->quantum);
     
     // Chequear si el proceso cede la CPU
@@ -222,7 +239,7 @@ int main(int argc, char **argv)
       // Ver si el tiempo que ejecuta antes de ceder, es menor que el quantum
       // Se avanza ese tiempo en el timer
       if (current->wait < queues[j]->quantum){
-        printf("PROCESO %s CEDE CPU", current->name);
+        printf("PROCESO %s CEDE CPU\n", current->name);
         if(current->first_time == 0){
           current->first_time = timer;
         }
@@ -230,9 +247,11 @@ int main(int argc, char **argv)
         // Si le queda menos de lo que va a ejecutar, ejecutar el máximo posible
         if (current->wait > current->cycles){
           timer += current->cycles;
+          S_passed += current->cycles;
         }
         else {
           timer += current->wait;
+          S_passed += current->wait;
         }
         
         current->status="RUNNING";
@@ -241,16 +260,16 @@ int main(int argc, char **argv)
         if(current->first_wait == 0){
           current->first_wait = timer;
         }
-        // SI termina
+        // Si termina, sacarlo de la cola y guardarlo en array de terminados
         if (current->cycles - current->wait <= 0){
-          current->cycles = 0; //current->cycles - current->wait;
+          current->cycles = 0; 
           current->end_time = timer;
           finished_p[finished] = current;
           finished++; 
           printList(queues[j]->head);
           deleteNode(current_node, queues[j]);
-
         }
+
         else {
           current->cycles = current->cycles - current->wait;
            printf("LE QUEDA %d a PROCESO %s, timer=%d\n\n", current->cycles, current->name, timer);
@@ -261,7 +280,6 @@ int main(int argc, char **argv)
             deleteNode(current_node, queues[j]);
             append(queues[0], current);
           }
-          printf("LISTA 0 DESPUÉS DE SUBIR\n");
           printList(queues[0]->head);
         }
       }
@@ -273,6 +291,7 @@ int main(int argc, char **argv)
       }
       // Avanzar reloj del sistema
       timer += current->cycles;
+      S_passed += current->cycles;
       current->status="RUNNING";
       current->status="FINISHED";
       current->chosen++;
@@ -281,27 +300,32 @@ int main(int argc, char **argv)
       finished++; 
       printList(queues[j]->head);
       deleteNode(current_node, queues[j]);
-      // deleteHead(queues[j]);
-
-      //printf("ELIMINAR DE LA COLA1 name %s\n", finished_p[finished]->name);
     }
+
     // Sino, ejecuta quantum y lo mueven a cola inferior
     else {
-      current->first_time = timer;
+      if(current->first_time = 0){
+        current->first_time = timer;
+      }
       // Avanzar reloj del sistema
       timer += queues[j]->quantum;
-      current->chosen = 1;
+      S_passed += queues[j]->quantum;
+      current->chosen++;
       current->cycles = current->cycles - queues[j]->quantum;
-      current->interrupted = 1;
+      current->interrupted++;
       append(queues[j+1], current);
       deleteNode(current_node, queues[j]);
-      //deleteHead(queues[j]);
     }
-    printf("Lista %d", j);
-    printList(queues[j]->head);
-    printf("Lista %d", j+1);
-    printList(queues[j+1]->head);
+    // printf("Lista %d", j);
+    // printList(queues[j]->head);
+    // printf("Lista %d", j+1);
+    // printList(queues[j+1]->head);
     queues = update_waiting(queues, total, timer);
+    if (S_passed >= S){
+      queues = update_S(queues, total, S, S_passed);
+      S_passed = 0;
+    }
+    
 
   }
   printf("TIEMPO FINAL %d\n", timer);
@@ -315,7 +339,7 @@ int main(int argc, char **argv)
     args_to_file[2] = pr->interrupted;
     args_to_file[3] = turnaround_time(pr); // calcular turnaround
     args_to_file[4] = response_time(pr); // calcular response time
-    args_to_file[5] = 0; // calcular waiting time
+    args_to_file[5] = pr->total_time_waiting; // calcular waiting time
     printf("---->%s,%d,%d,%d,%d,%d\n", args_to_file[0], args_to_file[1], args_to_file[2], args_to_file[3], args_to_file[4],args_to_file[5] );
     
     // ------------- No me está funcionando la escritura
