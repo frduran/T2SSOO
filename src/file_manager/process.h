@@ -18,15 +18,24 @@ typedef struct process {
   int end_time;
 } Process;
 
-// typedef struct queue {
-//   int Q;
-//   int priority;
-//   int p;
-//   int q;
-//   int quantum;
-//   int length;
-//   Process** process_queue;
-// } Queue;
+typedef struct _fib_node {
+  int key;
+  int degree;
+  struct _fib_node *left_sibling;
+  struct _fib_node *right_sibling;
+  struct _fib_node *parent;
+  struct _fib_node *child;
+  bool mark;
+  bool visited;
+  Process* process;
+} fib_node;
+
+typedef struct fibanocci_heap {
+  int n;
+  fib_node *min;
+  int phi;
+  int degree;
+} FIB_HEAP;
 
 // Structs obtenidos de: https://www.programiz.com/dsa/fibonacci-heap
 typedef struct node {
@@ -35,16 +44,6 @@ typedef struct node {
     Process *process;
     int value;
 } Node;
-
-// typedef struct _NODE {
-//   int key;
-//   int degree;
-//   struct _NODE *previous;
-//   struct _NODE *next;
-//   bool mark;
-//   bool visited;
-//   Process *process;
-// } NODE;
 
 typedef struct queue {
   int n;
@@ -63,12 +62,13 @@ typedef struct queue {
 //Process* initialize(int pid, char name, int priority, char status);
 // void add_process(Queue* queue, Process* process);
 // void print_queue(Queue* queue);
-// Queue *make_queue();
-// void print_queue(NODE *n);
-// void insertion(Queue *H, NODE *new, int val);
-// void queue_link(Queue *H, NODE *y, NODE *x);
-// void consolidate(Queue *H);
-// NODE *extract_min(Queue *H);
+FIB_HEAP *make_fib_heap();
+void print_heap(fib_node *n);
+void insertion(FIB_HEAP *H, fib_node *new, int val);
+void fib_heap_link(FIB_HEAP *H, fib_node *y, fib_node *x);
+int cal_degree(int n);
+void consolidate(FIB_HEAP *H);
+fib_node *extract_min(FIB_HEAP *H);
 //void push(Node* head, Process* process);
 void append(Queue* queue, Process* process);
 void printList(Node* node);

@@ -21,26 +21,35 @@
 // }
 
 // Funciones obtenidas de: https://www.programiz.com/dsa/fibonacci-heap
-// Inicializa un lista ligada
-// Queue *make_queue() {
-//   Queue *H;
-//   H = (Queue *)malloc(sizeof(Queue));
-//   H->n = 0;
-//   H->min = NULL;
-//   H->phi = 0;
-//   H->degree = 0;
-//   //
-//   H->Q = 0;
-//   H->priority = 0;
-//   H->p = 0;
-//   H->q = 0;
-//   H->quantum = 0;
-//   H->length = 0;
-//   return H;
-// }
+// Inicializa un fibonacci heap
+FIB_HEAP *make_fib_heap() {
+  FIB_HEAP *H;
+  H = (FIB_HEAP *)malloc(sizeof(FIB_HEAP));
+  H->n = 0;
+  H->min = NULL;
+  H->phi = 0;
+  H->degree = 0;
+  return H;
+}
+
+// Printing the heap
+void print_heap(fib_node *n) {
+  fib_node *x;
+  for (x = n;; x = x->right_sibling) {
+    if (x->child == NULL) {
+      printf("node with no child: %s (%d) \n", x->process->name, x->key);
+    } else {
+      printf("fib_node: %s(%d) with child:%s (%d)\n", x->process->name, x->key, x->child->process->name, x->child->key);
+      print_heap(x->child);
+    }
+    if (x->right_sibling == n) {
+      break;
+    }
+  }
+}
 
 // // Imprime la lista ligada, obtenido de https://gist.github.com/ArgiesDario/da409828e81ef441186268b8ee3acd5f
-// void printList(NODE head){
+// void printList(fib_node head){
 //     while(head != NULL){ //Mientras head no sea NULL
 //         printf("%4d",head->process->name); //Imprimimos el valor del nodo
 //         head = head->next; //Pasamos al siguiente nodo
@@ -48,147 +57,162 @@
 // }
  
 
-// // Inserting nodes
-// void insertion(Queue *H, NODE *new, int val){
-//     new = (NODE *)malloc(sizeof(NODE));
-//     new->key = val;
-//     new->degree = 0;
-//     new->mark = false;
-//     new->visited = false;
-//     new->previous = new;
-//     new->next = new;
-//     if (H->min == NULL) {
-//       H->min = new;
-//     } else {
-//       H->min->previous->next = new;
-//       new->next = H->min;
-//       new->previous = H->min->previous;
-//       H->min->previous = new;
-//       if (new->key < H->min->key) {
-//         H->min = new;
-//       }
-//     }
-//     (H->n)++;
-// }
-
-// // Linking
-// void queue_link(Queue *H, NODE *y, NODE *x) {
-//   y->next->previous = y->previous;
-//   y->previous->next = y->next;
-
-//   if (x->next == x)
-//     H->min = x;
-
-//   y->previous = y;
-//   y->next = y;
+// Inserting nodes
+void insertion(FIB_HEAP *H, fib_node *new, int val) {
+  new->key = val;
+  new->degree = 0;
+  new->mark = false;
+  new->parent = NULL;
+  new->child = NULL;
+  new->visited = false;
+  new->left_sibling = new;
+  new->right_sibling = new;
+  if (H->min == NULL) {
+    H->min = new;
+  } else {
+    H->min->left_sibling->right_sibling = new;
+    new->right_sibling = H->min;
+    new->left_sibling = H->min->left_sibling;
+    H->min->left_sibling = new;
+    if (new->key < H->min->key) {
+      H->min = new;
+    }
+  }
+  (H->n)++;
+}
 
 
-//   y->next = x->child;
-//   y->previous = x->child->previous;
-//   x->child->previous->next = y;
-//   x->child->previous = y;
-//   if ((y->key) < (x->child->key))
-//     x->child = y;
+// Linking
+void fib_heap_link(FIB_HEAP *H, fib_node *y, fib_node *x) {
+  y->right_sibling->left_sibling = y->left_sibling;
+  y->left_sibling->right_sibling = y->right_sibling;
 
-//   (x->degree)++;
-// }
+  if (x->right_sibling == x)
+    H->min = x;
 
-// // Consolidate function
-// void consolidate(Queue *H) {
-//   int degree, i, d;
-//   degree = cal_degree(H->n);
-//   NODE *A[degree], *x, *y, *z;
-//   for (i = 0; i <= degree; i++) {
-//     A[i] = NULL;
-//   }
-//   x = H->min;
-//   do {
-//     d = x->degree;
-//     while (A[d] != NULL) {
-//       y = A[d];
-//       if (x->key > y->key) {
-//         NODE *exchange_help;
-//         exchange_help = x;
-//         x = y;
-//         y = exchange_help;
-//       }
-//       if (y == H->min)
-//         H->min = x;
-//       queue_link(H, y, x);
-//       if (y->next == x)
-//         H->min = x;
-//       A[d] = NULL;
-//       d++;
-//     }
-//     A[d] = x;
-//     x = x->next;
-//   } while (x != H->min);
+  y->left_sibling = y;
+  y->right_sibling = y;
+  y->parent = x;
 
-//   H->min = NULL;
-//   for (i = 0; i < degree; i++) {
-//     if (A[i] != NULL) {
-//       A[i]->previous = A[i];
-//       A[i]->next = A[i];
-//       if (H->min == NULL) {
-//         H->min = A[i];
-//       } else {
-//         H->min->previous->next = A[i];
-//         A[i]->next = H->min;
-//         A[i]->previous = H->min->previous;
-//         H->min->previous = A[i];
-//         if (A[i]->key < H->min->key) {
-//           H->min = A[i];
-//         }
-//       }
-//       if (H->min == NULL) {
-//         H->min = A[i];
-//       } else if (A[i]->key < H->min->key) {
-//         H->min = A[i];
-//       }
-//     }
-//   }
-// }
+  if (x->child == NULL) {
+    x->child = y;
+  }
+  y->right_sibling = x->child;
+  y->left_sibling = x->child->left_sibling;
+  x->child->left_sibling->right_sibling = y;
+  x->child->left_sibling = y;
+  if ((y->key) < (x->child->key))
+    x->child = y;
 
-// // Extract min
-// NODE *extract_min(Queue *H) {
-//   if (H->min == NULL)
-//     printf("\n The heap is empty");
-//   else {
-//     NODE *temp = H->min;
-//     NODE *pntr;
-//     pntr = temp;
-//     NODE *x = NULL;
-//     if (temp->child != NULL) {
-//       x = temp->child;
-//       do {
-//         pntr = x->next;
-//         (H->min->previous)->next = x;
-//         x->next = H->min;
-//         x->previous = H->min->previous;
-//         H->min->previous = x;
-//         if (x->key < H->min->key)
-//           H->min = x;
-//         x->parent = NULL;
-//         x = pntr;
-//       } while (pntr != temp->child);
-//     }
+  (x->degree)++;
+}
 
-//     (temp->previous)->next = temp->next;
-//     (temp->next)->previous = temp->previous;
-//     H->min = temp->next;
+// Calculate the degree
+int cal_degree(int n) {
+  int count = 0;
+  while (n > 0) {
+    n = n / 2;
+    count++;
+  }
+  return count;
+}
 
-//     if (temp == temp->next && temp->child == NULL)
-//       H->min = NULL;
-//     else {
-//       H->min = temp->next;
-//       consolidate(H);
-//     }
-//     H->n = H->n - 1;
-//     return temp;
-//   }
-//   return H->min;
-// }
+// Consolidate function
+void consolidate(FIB_HEAP *H) {
+  int degree, i, d;
+  degree = cal_degree(H->n);
+  fib_node *A[degree], *x, *y, *z;
+  for (i = 0; i <= degree; i++) {
+    A[i] = NULL;
+  }
+  x = H->min;
+  do {
+    d = x->degree;
+    while (A[d] != NULL) {
+      y = A[d];
+      if (x->key > y->key) {
+        fib_node *exchange_help;
+        exchange_help = x;
+        x = y;
+        y = exchange_help;
+      }
+      if (y == H->min)
+        H->min = x;
+      fib_heap_link(H, y, x);
+      if (y->right_sibling == x)
+        H->min = x;
+      A[d] = NULL;
+      d++;
+    }
+    A[d] = x;
+    x = x->right_sibling;
+  } while (x != H->min);
 
+  H->min = NULL;
+  for (i = 0; i < degree; i++) {
+    if (A[i] != NULL) {
+      A[i]->left_sibling = A[i];
+      A[i]->right_sibling = A[i];
+      if (H->min == NULL) {
+        H->min = A[i];
+      } else {
+        H->min->left_sibling->right_sibling = A[i];
+        A[i]->right_sibling = H->min;
+        A[i]->left_sibling = H->min->left_sibling;
+        H->min->left_sibling = A[i];
+        if (A[i]->key < H->min->key) {
+          H->min = A[i];
+        }
+      }
+      if (H->min == NULL) {
+        H->min = A[i];
+      } else if (A[i]->key < H->min->key) {
+        H->min = A[i];
+      }
+    }
+  }
+}
+
+
+// Extract min
+fib_node *extract_min(FIB_HEAP *H) {
+  if (H->min == NULL)
+    printf("\n The heap is empty");
+  else {
+    fib_node *temp = H->min;
+    fib_node *pntr;
+    pntr = temp;
+    fib_node *x = NULL;
+    if (temp->child != NULL) {
+      x = temp->child;
+      do {
+        pntr = x->right_sibling;
+        (H->min->left_sibling)->right_sibling = x;
+        x->right_sibling = H->min;
+        x->left_sibling = H->min->left_sibling;
+        H->min->left_sibling = x;
+        if (x->key < H->min->key)
+          H->min = x;
+        x->parent = NULL;
+        x = pntr;
+      } while (pntr != temp->child);
+    }
+
+    (temp->left_sibling)->right_sibling = temp->right_sibling;
+    (temp->right_sibling)->left_sibling = temp->left_sibling;
+    H->min = temp->right_sibling;
+
+    if (temp == temp->right_sibling && temp->child == NULL)
+      H->min = NULL;
+    else {
+      H->min = temp->right_sibling;
+      consolidate(H);
+    }
+    H->n = H->n - 1;
+    return temp;
+  }
+  return H->min;
+}
 // https://www.geeksforgeeks.org/doubly-linked-list/
 /* Given a reference (pointer to pointer) to the head of a list
    and an int, inserts a new node on the front of the list. */
