@@ -10,10 +10,48 @@
 #include "../file_manager/manager.h"
 
 
-/* FALTA INTEGRAR LÓGICA DE PERIODO EN EL CUAL PASAN A COLA DE MAYOR PRIORIDAD
+/* FALTA INTEGRAR ESCRITURA DE ARCHIVO, SORT, LÓGICA DE PERIODO EN EL CUAL PASAN A COLA DE MAYOR PRIORIDAD
    CALCULO DE WAITING TIME Y TAMBIÉN WAIT Y WAITING_DELAY QUE SE DA COMO ATRIBUTO
    DE UN PROCESO */
 
+Queue** update_waiting(Queue** queues, int total, int timer){
+  printf("//////////////////////////////////////vamos a actualizar los waiting\n");
+  for (int i=0; i<total; i++){
+    printf("Cola %d\n", i);
+    printList(queues[i]->head);
+    Node* check = queues[i]->head;
+    if (check->value != 0){
+      while (true){
+      
+      if (check->process->status == "WAITING"){
+        printf("!!FIRST WAIT=%d", check->process->first_wait);
+        int dif = timer - check->process->first_wait;
+        printf("este proceso están en waiting desde %d, ha pasado %d", check->process->first_wait, dif);
+
+        if (dif > check->process->waiting_delay){
+          check->process->total_time_waiting += check->process->waiting_delay;
+          check->process->status="READY";
+          printf("proceso %s pasa a ready", check->process->name);
+        }
+        else {
+          check->process->total_time_waiting += dif;
+        }
+      } 
+      
+      if (check->next != NULL){
+        check = check->next;
+      }
+      else {
+        break;
+      }   
+    }
+    }
+    
+    
+  }
+  printf("//////////////////////////////////////terminado de actualizar los waiting\n");
+  return queues;
+}
 
 Queue** init_queues(Queue** queues, int Q, int q){
   // Generar la cantidad Q de colas y guardarlas en el array de colas
@@ -97,6 +135,7 @@ int main(int argc, char **argv)
   int total = input->len;
   
   int finished = 0; // contador de los procesos terminados
+
   // Inicializar los procesos, leídos del archivo input
   for (int i = 0; i < total; i++) {
     char** line = input->lines[i];
@@ -111,6 +150,7 @@ int main(int argc, char **argv)
     process->waiting_delay = atoi(line[5]);
     process->chosen = 0;
     process->interrupted = 0;
+    process->first_wait = 0;
     process->first_time = 0;
     process->end_time = 0;
     Queue* queue = queues[0];
@@ -122,31 +162,112 @@ int main(int argc, char **argv)
 
   int timer = 0;
 
+  //////////////////////////////////////////////////////////////////////////////////////7
   // Ejecutar procesos hasta que todos hayan terminado
   while(finished < total){
     int j=0;
+    Process* current;
+    Node* current_node;
     printf("\n////TIMER: %d", timer);
     // Chequear que cola ejecutar
     
-    printf("\n---------------");
     Queue* exe = queues[j];
     while(true){
+      printf("***CHEQUEANDO COLA %d\n", j);
+      // Revisar todos los nodos y actualizar a los waiting
+
       // Cola tiene cabeza
-      printf("queue %d, head: %d", j, queues[j]->head->value);
+      int forward = 0;
+      printf("queue %d, head: %d\n", j, queues[j]->head->value);
       
       if (queues[j]->head->value == 1){
-        Queue* exe = queues[j];
-        break;
+        // Revisar si hay algún proceso en estado READY
+        Node* check = queues[j]->head;
+        while (true){
+          
+          if (check->process->status == "READY"){
+            current_node = check;
+            current = check->process;
+            printf("NODE %s IS READY\n", current->name);
+            break;
+          } 
+          // SI NO ERA EL ÚLTIMO DE LA COLA
+          else if (check->next != NULL){
+            printf("PROCESO %s ESTÁ EN PROCESO WAITING\n", check->process->name);
+            check = check->next;
+          // SI ERA EL ÚLTIMO, BREAK Y CHEQUEAR LA SIGUIENTE COLA
+          } else {
+            forward = 1;
+            break;
+          }
+          
+        }
+        if (forward){
+          j++;
+        }
+        else {
+          break;
+        }
+        
       }
       else {
         j++;
       }
     }
-    Process* current = queues[j]->head->process;
+    // Process* current = queues[j]->head->process;
     printf("cycles %d, quantum %d\n", current->cycles, queues[j]->quantum);
     
+    // Chequear si el proceso cede la CPU
+    if (current->wait != 0){
+      // Ver si el tiempo que ejecuta antes de ceder, es menor que el quantum
+      // Se avanza ese tiempo en el timer
+      if (current->wait < queues[j]->quantum){
+        printf("PROCESO %s CEDE CPU", current->name);
+        if(current->first_time == 0){
+          current->first_time = timer;
+        }
+        // Avanzar reloj del sistema
+        // Si le queda menos de lo que va a ejecutar, ejecutar el máximo posible
+        if (current->wait > current->cycles){
+          timer += current->cycles;
+        }
+        else {
+          timer += current->wait;
+        }
+        
+        current->status="RUNNING";
+        current->status="WAITING";
+        current->chosen++;
+        if(current->first_wait == 0){
+          current->first_wait = timer;
+        }
+        // SI termina
+        if (current->cycles - current->wait <= 0){
+          current->cycles = 0; //current->cycles - current->wait;
+          current->end_time = timer;
+          finished_p[finished] = current;
+          finished++; 
+          printList(queues[j]->head);
+          deleteNode(current_node, queues[j]);
+
+        }
+        else {
+          current->cycles = current->cycles - current->wait;
+           printf("LE QUEDA %d a PROCESO %s, timer=%d\n\n", current->cycles, current->name, timer);
+        
+          // Si estaba en la cola de mayor prioridad, se queda ahí, sino
+          // Subirle a la cola de mayor prioridad
+          if (j != 0){
+            deleteNode(current_node, queues[j]);
+            append(queues[0], current);
+          }
+          printf("LISTA 0 DESPUÉS DE SUBIR\n");
+          printList(queues[0]->head);
+        }
+      }
+    }
     // Si cycles es menor a quantum, ejecuta cycles y termina 
-    if (current->cycles <= queues[j]->quantum){
+    else if (current->cycles <= queues[j]->quantum){
       if(current->first_time = 0){
         current->first_time = timer;
       }
@@ -159,8 +280,8 @@ int main(int argc, char **argv)
       finished_p[finished] = current;
       finished++; 
       printList(queues[j]->head);
-
-      deleteHead(queues[j]);
+      deleteNode(current_node, queues[j]);
+      // deleteHead(queues[j]);
 
       //printf("ELIMINAR DE LA COLA1 name %s\n", finished_p[finished]->name);
     }
@@ -169,15 +290,18 @@ int main(int argc, char **argv)
       current->first_time = timer;
       // Avanzar reloj del sistema
       timer += queues[j]->quantum;
-      current->status = "WAITING";
       current->chosen = 1;
       current->cycles = current->cycles - queues[j]->quantum;
       current->interrupted = 1;
       append(queues[j+1], current);
-      deleteHead(queues[j]);
+      deleteNode(current_node, queues[j]);
+      //deleteHead(queues[j]);
     }
+    printf("Lista %d", j);
     printList(queues[j]->head);
+    printf("Lista %d", j+1);
     printList(queues[j+1]->head);
+    queues = update_waiting(queues, total, timer);
 
   }
   printf("TIEMPO FINAL %d\n", timer);
