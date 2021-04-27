@@ -5,18 +5,21 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
 #include "../file_manager/process.h"
 #include "../file_manager/manager.h"
 
 
-// INTENTO DE GIT 
 Queue** init_queues(Queue** queues, int Q, int q){
   // Generar la cantidad Q de colas y guardarlas en el array de colas
   for (int j = 0; j < Q; j++){
     int quantum = (Q - j) * q;
     // Process** process_queue = calloc(255, sizeof(Process*));
     Queue* queue = calloc(1, sizeof(Queue));
+    Node* node = calloc(1,sizeof(Node));
     queue->Q = Q;
+    queue->head = node;
+    queue->head->value = 0;
     queue->p = j;
     queue->q = q;
     queue->quantum = quantum;
@@ -25,6 +28,43 @@ Queue** init_queues(Queue** queues, int Q, int q){
     queues[j] = queue;
   }
   return queues;
+}
+
+char* concat_array(char** array){
+  int n_args = 6;
+  char* line = calloc(6, sizeof(char));
+  
+  for (int i = 0; i < n_args; i++)
+  {
+    strcat(line, array[i]);
+    // if (i < n_args + 3){
+    //   strcat(line, ",");
+    // }
+  }
+  printf("%s", line);
+  return line;
+}
+
+void write_output(char* path, char** args) {
+  FILE* file = fopen(path, "a");
+  char* line = "hhhhh";
+  //char* line = concat_array(args);
+  printf("Escribiendo linea: %s en ./%s.txt\n", line, path);
+  fputs(line, file);
+  //free(line);
+  fclose(file);
+}
+
+int response_time(Process* process){
+  int first = process->first_time;
+  int arrive = process->start_time;
+  return first-arrive;
+}
+
+int turnaround_time(Process* process){
+  int end = process->end_time;
+  int arrive = process->start_time;
+  return end-arrive;
 }
 
 // void delete_process(Queue* queue, int pos){
@@ -60,8 +100,8 @@ int main(int argc, char **argv)
     process->name = line[0];
     process->priority = 0;
     process->status = "READY";
-    process->cycles = atoi(line[2]);
-    process->start_time = atoi(line[3]);
+    process->cycles = atoi(line[3]);
+    process->start_time = atoi(line[2]);
     process->wait = atoi(line[4]);
     process->waiting_delay = atoi(line[5]);
     process->chosen = 0;
@@ -69,47 +109,90 @@ int main(int argc, char **argv)
     process->first_time = 0;
     process->end_time = 0;
     Queue* queue = queues[0];
-    add_process(queue, process);
-
-  
-  
-  // Ejecutar procesos hasta que todos hayan terminado
+    append(queue, process);
   }
-  print_queue(queues[0]);
+  printList(queues[0]->head);
+  // sortQueue(queues[0]);
+  // printList(queues[0]->head);
+
   int timer = 0;
+
+  // Ejecutar procesos hasta que todos hayan terminado
   while(finished < total){
-    Queue* most_prior = queues[0];
-    Process* current = most_prior->process_queue[0];
-    printf("cycles %d, quantum %d\n", current->cycles, most_prior->quantum);
+    int j=0;
+    printf("\n////TIMER: %d", timer);
+    // Chequear que cola ejecutar
     
-    // Si cycles es mayor a quantum, ejecuta quantum y lo sacan de la cola
-    if (current->cycles >= most_prior->quantum){
+    printf("\n---------------");
+    Queue* exe = queues[j];
+    while(true){
+      // Cola tiene cabeza
+      printf("queue %d, head: %d", j, queues[j]->head->value);
+      
+      if (queues[j]->head->value == 1){
+        Queue* exe = queues[j];
+        break;
+      }
+      else {
+        j++;
+      }
+    }
+    Process* current = queues[j]->head->process;
+    printf("cycles %d, quantum %d\n", current->cycles, queues[j]->quantum);
+    
+    // Si cycles es menor a quantum, ejecuta cycles y termina 
+    if (current->cycles <= queues[j]->quantum){
+      if(current->first_time = 0){
+        current->first_time = timer;
+      }
+      // Avanzar reloj del sistema
       timer += current->cycles;
       current->status="RUNNING";
       current->status="FINISHED";
+      current->chosen++;
+      current->end_time = timer;
       finished_p[finished] = current;
       finished++; 
-      printf("name %s\n", finished_p[0]->name);
+      printList(queues[j]->head);
+
+      deleteHead(queues[j]);
+
+      //printf("ELIMINAR DE LA COLA1 name %s\n", finished_p[finished]->name);
     }
+    // Sino, ejecuta quantum y lo mueven a cola inferior
     else {
-      timer += most_prior->quantum;
-      printf("---MOST PRIOR1\n");
-      print_queue(most_prior);
-      add_process(queues[1], current);
-      delete_process(most_prior, 1);
-      printf("MOST PRIOR2\n");
-      print_queue(most_prior);
-      printf("NEXT MOST PRIOR\n");
-      print_queue(queues[1]);
-      finished_p[finished] = current;
-      printf("name %s\n", finished_p[0]->name);
+      current->first_time = timer;
+      // Avanzar reloj del sistema
+      timer += queues[j]->quantum;
+      current->status = "WAITING";
+      current->chosen = 1;
+      current->cycles = current->cycles - queues[j]->quantum;
+      current->interrupted = 1;
+      append(queues[j+1], current);
+      deleteHead(queues[j]);
     }
+    printList(queues[j]->head);
+    printList(queues[j+1]->head);
 
-
-    // Sino, ejecuta cycles y termina
-    break;
+  }
+  printf("TIEMPO FINAL %d\n", timer);
+  printf("total: %d\n", total);
+  for (int w=0; w<total; w++){
+    char** args_to_file = calloc(6, sizeof(char*));
+    
+    Process* pr = finished_p[w];
+    args_to_file[0] = pr->name;
+    args_to_file[1] = pr->chosen;
+    args_to_file[2] = pr->interrupted;
+    args_to_file[3] = turnaround_time(pr); // calcular turnaround
+    args_to_file[4] = response_time(pr); // calcular response time
+    args_to_file[5] = 0; // calcular waiting time
+    printf("---->%s,%d,%d,%d,%d,%d\n", args_to_file[0], args_to_file[1], args_to_file[2], args_to_file[3], args_to_file[4],args_to_file[5] );
+    //concat_array(args_to_file);
+    //write_output(output_path, args_to_file);
   }
   
+
   
   return 0;
 }
