@@ -10,30 +10,30 @@
 
 
 // INTENTO DE GIT 
-Queue* init_queues(Queue** queues, int Q, int q){
+Queue** init_queues(Queue** queues, int Q, int q){
   // Generar la cantidad Q de colas y guardarlas en el array de colas
   for (int j = 0; j < Q; j++){
     int quantum = (Q - j) * q;
-    Process** process_queue = calloc(255, sizeof(Process*));
+    // Process** process_queue = calloc(255, sizeof(Process*));
     Queue* queue = calloc(1, sizeof(Queue));
     queue->Q = Q;
     queue->p = j;
     queue->q = q;
     queue->quantum = quantum;
     queue->length = 0;
-    queue->process_queue = process_queue;
+    // queue->process_queue = process_queue;
     queues[j] = queue;
   }
   return queues;
 }
 
-Queue* delete_process(Queue* queue, int pos){
-  // for (int i=0; i<queue->length; i++){
-  //   queue->process_queue[i-1] = queue->process_queue[i];
-  // }
-  memcpy (queue->process_queue, queue->process_queue+1, sizeof(Process*));
-  print_queue(queue);
-}
+// void delete_process(Queue* queue, int pos){
+//   // for (int i=0; i<queue->length; i++){
+//   //   queue->process_queue[i-1] = queue->process_queue[i];
+//   // }
+//   memcpy (queue->process_queue, queue->process_queue+1, sizeof(Process*));
+//   print_queue(queue);
+// }
 
 int main(int argc, char **argv)
 {
@@ -43,12 +43,12 @@ int main(int argc, char **argv)
   int q = atoi(argv[4]);  // Variable para cálculo de quantums
   int S = atoi(argv[5]);  // Período en el que los procesos pasan a cola de mayor prioridad
   Queue** queues = calloc(255, sizeof(Queue*));
-  Process** finished_p = calloc(255, sizeof(Process*));
+  Process** finished_p = calloc(2048, sizeof(Process*));
 
   queues = init_queues(queues, Q, q);
 
   // Lectura del archivo
-  InputFile *input = read_file(input_path);
+  InputFile* input = read_file(input_path);
   int total = input->len;
   
   int finished = 0; // contador de los procesos terminados
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   while(finished < total){
     Queue* most_prior = queues[0];
     Process* current = most_prior->process_queue[0];
-    printf("cycles %d, quantum %d", current->cycles, most_prior->quantum);
+    printf("cycles %d, quantum %d\n", current->cycles, most_prior->quantum);
     
     // Si cycles es mayor a quantum, ejecuta quantum y lo sacan de la cola
     if (current->cycles >= most_prior->quantum){
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
       current->status="FINISHED";
       finished_p[finished] = current;
       finished++; 
-      printf("name %s", finished_p[0]->name);
+      printf("name %s\n", finished_p[0]->name);
     }
     else {
       timer += most_prior->quantum;
@@ -97,12 +97,12 @@ int main(int argc, char **argv)
       print_queue(most_prior);
       add_process(queues[1], current);
       delete_process(most_prior, 1);
-      printf("MOST PRIOR2");
+      printf("MOST PRIOR2\n");
       print_queue(most_prior);
-      printf("NEXT MOST PRIOR");
+      printf("NEXT MOST PRIOR\n");
       print_queue(queues[1]);
       finished_p[finished] = current;
-      printf("name %s", finished_p[0]->name);
+      printf("name %s\n", finished_p[0]->name);
     }
 
 
