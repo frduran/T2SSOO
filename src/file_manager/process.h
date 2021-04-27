@@ -16,6 +16,8 @@ typedef struct process {
   int interrupted;
   int first_time;
   int end_time;
+  int first_wait;
+  int total_time_waiting;
 } Process;
 
 typedef struct _fib_node {
@@ -73,4 +75,5 @@ fib_node *extract_min(FIB_HEAP *H);
 void append(Queue* queue, Process* process);
 void printList(Node* node);
 void deleteHead(Queue* queue);
+void deleteNode(Node* node, Queue* queue);
 void sortQueue(Queue* queue);

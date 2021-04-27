@@ -269,6 +269,7 @@ void append(Queue* queue, Process* process)
  
     /* 6. Change the next of last node */
     last->next = new_node;
+
     // printf("AQQQQQQ");
     // Node* new_tail = calloc(1,sizeof(Node));
     // last->next = new_tail;
@@ -286,7 +287,7 @@ void printList(Node* node)
 {
   if (node->value == 1){
     while (node != NULL) {
-        printf(" %s ", node->process->name);
+        printf("%s, STATUS: %s\n", node->process->name, node->process->status);
         //printf("next value %d ", node->next->value);
         node = node->next;
     }
@@ -299,7 +300,6 @@ void printList(Node* node)
 void deleteHead(Queue* queue){
     // free(head);
   if (queue->head->next != NULL){
-    printf("/Value %d/",queue->head->next->value);
     if (queue->head->next->value ==1){
       queue->head = queue->head->next;
       queue->head->prev = NULL;
@@ -315,6 +315,44 @@ void deleteHead(Queue* queue){
       Node* new_node = calloc(1,sizeof(Node));
       new_node->value = 0;
       queue->head = new_node;
+  }
+    return;
+}
+
+void deleteNode(Node* node, Queue* queue){
+  // NO ES EL ÚLTIMO
+
+  if (node->next != NULL){
+    // // Está inicializado el siguiente
+      // NI ES EL PRIMERO = ES UNO DE AL MEDIO
+      if (node->prev != NULL){ 
+        node->prev->next = node->next;
+        node->next->prev = node->prev;
+
+      }
+      // O ES LA CABEZA
+      else {
+        node->next->prev = NULL;
+        queue->head = node->next;
+      }
+
+  //     //free(node);
+  }
+
+
+  // ES LA COLA
+  else {
+    // SI TAMBIEN SOY LA CABEZA, ES DECIR SOY EL UNICO ELEMENTO:
+    if (node->prev == NULL){
+      Node* new_node = calloc(1,sizeof(Node));
+      new_node->value = 0;
+      queue->head = new_node;
+    }
+    else {
+      node->prev->next = NULL;
+    }
+   
+      // free(node)
   }
     return;
 }
