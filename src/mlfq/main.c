@@ -226,22 +226,31 @@ int main(int argc, char **argv)
     printf("\n////TIMER: %d, S_passed %d", timer, S_passed);
     // Chequear que cola ejecutar
 
-    Queue* exe = queues[j];
-
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     while(true){
-      // if (j == Q){
-      //   int min_wait_delay = 99999;
-      //   for (int i = 0; i < Q; i++)
-      //   {
-      //     if (queues[j]->head->value == 1){
-      //       int dif = (timer - queues[j]->head->process->waiting_delay);
-      //       if (dif >  min_wait_delay){
-      //         min_wait_delay = dif;
-      //       }
-      //     }
+      // Si recorrió todas las colas y no encontró procesos READY:
+      if (j == Q){
+        printf("ME PASÉ");
+        int min_wait_delay = 99999;
+        for (int i = 0; i < Q; i++)
+        {
+          if (queues[j]->head->value == 1){
+            int dif = (timer - queues[j]->head->process->waiting_delay);
+            if (dif >  min_wait_delay){
+              min_wait_delay = dif;
+            }
+          }
+        }
+        printf("Tengo que avanzar %d ciclos en el timer", min_wait_delay);
+        timer += min_wait_delay;
+        S_passed += min_wait_delay;
+        queues = update_waiting(queues, total, timer);
 
-      //   }
+        if (S_passed >= S){
+          queues = update_S(queues, total, S, S_passed);
+          S_passed = 0;
+        }
+      }
      /////////////////////////////////////////////////////////////////////////////////////////////////////
       printf("***CHEQUEANDO COLA %d\n", j);
       // Cola tiene cabeza
@@ -275,6 +284,10 @@ int main(int argc, char **argv)
         }
         if (forward){
           j++;
+          printf("1ahora a chequear cola %d", j);
+          if (j==Q){
+            break;
+          }
         }
         else {
           break;
@@ -282,8 +295,11 @@ int main(int argc, char **argv)
         
       }
       else {
+        printf("2Estoy en cola %d\n", j);
         j++;
+        printf("3ahora a chequear cola %d, el valor de Q es %d\n", j, Q);
       }
+
     }
     printf("cycles %d, quantum %d, wait_left%d\n", current->cycles, queues[j]->quantum, current->wait_left);
     current->ready_time += (timer - current->first_ready);
