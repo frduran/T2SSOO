@@ -238,7 +238,7 @@ fib_node *extract_min(FIB_HEAP *H) {
 
 /* Given a reference (pointer to pointer) to the head
    of a DLL and an int, appends a new node at the end  */
-void append(Queue* queue, Process* process)
+Node* append(Queue* queue, Process* process)
 {
     /* 1. allocate node */
     Node* head = queue->head;
@@ -258,9 +258,10 @@ void append(Queue* queue, Process* process)
           node as head */
     if (head->value == 0) {
         new_node->prev = NULL;
+        free(head);
         head = new_node;
         queue->head = head;
-        return;
+        return new_node;
     }
  
     /* 5. Else traverse till the last node */
@@ -278,7 +279,7 @@ void append(Queue* queue, Process* process)
     /* 7. Make last node as previous of new node */
     new_node->prev = last;
  
-    return;
+    return new_node;
 }
 
 // This function prints contents of linked list starting
@@ -325,18 +326,18 @@ void deleteNode(Node* node, Queue* queue){
   if (node->next != NULL){
     // // Está inicializado el siguiente
       // NI ES EL PRIMERO = ES UNO DE AL MEDIO
-      if (node->prev != NULL){ 
-        node->prev->next = node->next;
-        node->next->prev = node->prev;
+    if (node->prev != NULL){ 
+      node->prev->next = node->next;
+      node->next->prev = node->prev;
 
-      }
-      // O ES LA CABEZA
-      else {
-        node->next->prev = NULL;
-        queue->head = node->next;
-      }
+    }
+    // O ES LA CABEZA
+    else {
+      node->next->prev = NULL;
+      queue->head = node->next;
+    }
 
-  //     //free(node);
+    // free(node);
   }
 
 
@@ -352,9 +353,10 @@ void deleteNode(Node* node, Queue* queue){
       node->prev->next = NULL;
     }
    
-      // free(node)
+    // free(node);
   }
-    return;
+  free(node);
+  return;
 }
 
 void sortQueue(Queue* queue){
@@ -371,7 +373,7 @@ void sortQueue(Queue* queue){
         
         node2 = node1_copy;
         node2->prev = node1;
-        node2->next = node1->next; 
+        node2->next = node1->next;
 
         node1->next = node2;
         node1_copy = node1;
@@ -385,6 +387,4 @@ void sortQueue(Queue* queue){
 
       } 
     }
- 
-
 }
