@@ -47,10 +47,10 @@ Queue** update_S(Queue** queues, int total, int S, int S_passed){
 // Revisa todos los procesos y el tiempo que llevan esperando, comparando con waiting_cycle
 // Si el proceso ya completó el waiting cycle, lo pasa a READY
 Queue** update_waiting(Queue** queues, int total, int timer){
-  // printf("////////////////////////////////////// Chequear procesos waiting\n");
+  printf("/////////////////// Chequear procesos waiting\n");
   for (int i=0; i<total; i++){
-    // printf("Cola %d\n", i);
-    // printList(queues[i]->head);
+    printf("Cola %d\n", i);
+    printList(queues[i]->head);
     Node* check = queues[i]->head;
     if (check->value != 0){
       while (true){
@@ -58,7 +58,7 @@ Queue** update_waiting(Queue** queues, int total, int timer){
         // Solo chequea a los procesos con status WAITING
         if (strcmp(check->process->status, "WAITING") == 0){
           int dif = timer - check->process->first_wait;
-          // printf("Diferencia entre timer: %d y first_wait: %d = %i\n", timer, check->process->first_wait, dif);
+          printf("Diferencia entre timer: %d y first_wait: %d = %i\n", timer, check->process->first_wait, dif);
           // Si completó su waiting delay, lo pasa a READY
           if (dif >= check->process->waiting_delay){
             check->process->total_time_waiting += check->process->waiting_delay;
@@ -66,7 +66,7 @@ Queue** update_waiting(Queue** queues, int total, int timer){
             check->process->chosen++;
             check->process->first_ready = check->process->first_wait + check->process->waiting_delay;
             check->process->first_wait = -1;
-            // printf("proceso %s pasa a ready", check->process->name);
+            printf("proceso %s pasa a ready", check->process->name);
             check->process->waiting_delay_left = check->process->waiting_delay;
           }
           // Si no completó su waiting_delay, se le resta dif a waiting_delay_left
@@ -87,7 +87,7 @@ Queue** update_waiting(Queue** queues, int total, int timer){
     
     
   }
-  // printf("//////////////////////////////////////Terminé de actualizar los waiting\n");
+  printf("//////////////////////////////////////Terminé de actualizar los waiting\n");
   return queues;
 }
 
@@ -359,8 +359,8 @@ int main(int argc, char **argv)
           // printList(queues[0]->head);
         }
       }
-      // ELSE IF DE SI wait_left >= quantum
-      else if (current->wait_left >= queues[j]->quantum){
+      // ELSE IF DE SI wait_left > quantum
+      else if (current->wait_left > queues[j]->quantum){
         if (current->cycles <= queues[j]->quantum){ //cycles <= quantum < waiting
           timer += current->cycles;
           S_passed += current->cycles;
@@ -377,11 +377,11 @@ int main(int argc, char **argv)
           // printList(queues[j]->head);
           deleteNode(current_node, queues[j]);
         }
-        else if (current->cycles > queues[j]->quantum){  //quantum <= waiting < cycles
+        else if (current->cycles > queues[j]->quantum){  //quantum < waiting < cycles
           timer += queues[j]->quantum;
           S_passed += queues[j]->quantum;
-          // current->wait_left -= queues[j]->quantum;
-          current->wait_left = current->wait;
+          current->wait_left -= queues[j]->quantum;
+          // current->wait_left = current->wait;
           current->chosen++;
           current->cycles = current->cycles - queues[j]->quantum;
           current->interrupted++;
@@ -393,20 +393,22 @@ int main(int argc, char **argv)
           deleteNode(current_node, queues[j]);
         }
       }
-      // else { //ELSE DE SI quantum == wait_left
-      //   if(current->first_wait == -1){
-      //     current->first_wait = timer;
-      //   }
-      //   timer += queues[j]->quantum;
-      //   S_passed += queues[j]->quantum;
-      //   current->wait_left -= queues[j]->quantum;
-      //   current->chosen++;
-      //   current->cycles = current->cycles - queues[j]->quantum;
-      //   current->interrupted++;
-      //   current->status = "WAITING";
-      //   append(queues[j+1], current);
-      //   deleteNode(current_node, queues[j]);
-      // }
+      else { //ELSE DE SI quantum == wait_left
+        if(current->first_wait == -1){
+          current->first_wait = timer;
+        }
+        timer += queues[j]->quantum;
+        S_passed += queues[j]->quantum;
+        // current->wait_left -= queues[j]->quantum;
+        current->wait_left = current->wait;
+        current->chosen++;
+        current->cycles = current->cycles - queues[j]->quantum;
+        current->interrupted++;
+        current->status = "WAITING";
+        printf("QUANTUM == WAITING: pasa a waiting pero baja de prioridad\n");
+        append(queues[j+1], current);
+        deleteNode(current_node, queues[j]);
+      }
     }
     // DE AQUI EN ADELANTE SIGUE SI NO HACE WAITING
     // Si cycles es menor a quantum, ejecuta cycles y termina 
