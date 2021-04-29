@@ -58,7 +58,7 @@ void print_heap(fib_node *n) {
  
 
 // Inserting nodes
-void insertion(FIB_HEAP *H, fib_node *new, int val) {
+void insertion(FIB_HEAP *H, fib_node *new, float val) {
   new->key = val;
   new->degree = 0;
   new->mark = false;

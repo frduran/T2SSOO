@@ -22,10 +22,11 @@ typedef struct process {
   int end_time;
   int first_wait;
   int total_time_waiting;
+  int total_time_exe;
 } Process;
 
 typedef struct _fib_node {
-  int key;
+  float key;
   int degree;
   struct _fib_node *left_sibling;
   struct _fib_node *right_sibling;
@@ -70,7 +71,7 @@ typedef struct queue {
 // void print_queue(Queue* queue);
 FIB_HEAP *make_fib_heap();
 void print_heap(fib_node *n);
-void insertion(FIB_HEAP *H, fib_node *new, int val);
+void insertion(FIB_HEAP *H, fib_node *new, float val);
 void fib_heap_link(FIB_HEAP *H, fib_node *y, fib_node *x);
 int cal_degree(int n);
 void consolidate(FIB_HEAP *H);
