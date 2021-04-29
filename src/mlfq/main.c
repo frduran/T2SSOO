@@ -282,7 +282,8 @@ int main(int argc, char **argv)
         Node* check = queues[j]->head;
         while (true){
           
-          if (strcmp(check->process->status, "READY") == 0){
+          // Si está en ready y "llegó"
+          if (strcmp(check->process->status, "READY") == 0 && timer >= check->process->start_time){
             current_node = check;
             current = check->process;
             printf("NODE %s IS READY\n", current->name);
@@ -328,7 +329,7 @@ int main(int argc, char **argv)
       current->first_time = timer;
     }
 
-    // AQUI ENTRA SOLO SI EL PROCESO TIENE WAIT Y CEDE LA CPU
+    // Chequear si cede CPU
     if (current->wait != 0){
       // Ver si el tiempo que ejecuta antes de ceder, es menor que el quantum
       // Se avanza ese tiempo en el timer
@@ -341,28 +342,23 @@ int main(int argc, char **argv)
           timer += current->cycles;
           current->total_time_exe += current->cycles;
           S_passed += current->cycles;
-        }
-        // Si no, sumar wait_left
-        else {
-          timer += current->wait_left;
-          current->total_time_exe += current->wait_left;
-          current->total_time_exe += current->wait_left;
-          S_passed += current->wait_left;
-        }
 
-        // Si termina, sacarlo de la cola y guardarlo en array de terminados
-        if (current->cycles <= current->wait_left){ //cycles < waiting < quantum
           current->status="FINISHED";
           current->end_time = timer;
+          current->cycles = 0;
           finished_p[finished] = current;
           finished++; 
-          // printList(queues[j]->head);
           deleteNode(current_node, queues[j]);
           printf("Proceso %s terminado\n", current->name);
         }
-        else { //CEDE LA CPU! waiting < cycles < quantum
+        // Si no, sumar wait_left, cede CPU
+        else {
+          timer += current->wait_left;
+          current->total_time_exe += current->wait_left;
+          S_passed += current->wait_left;
+
           current->first_wait = timer;
-          current->cycles = current->cycles - current->wait_left;
+          current->cycles -= current->wait_left;
           printf("LE QUEDA %d a PROCESO %s, timer=%d\n\n", current->cycles, current->name, timer);
           current->wait_left = current->wait; // wait left se reinicia
           // Si estaba en la cola de mayor prioridad, se queda ahí, sino
@@ -374,8 +370,34 @@ int main(int argc, char **argv)
             deleteNode(current_node, queues[j]);
             append(queues[0], current);
           }
-          // printList(queues[0]->head);
         }
+
+        // Si termina, sacarlo de la cola y guardarlo en array de terminados
+        // if (current->cycles <= current->wait_left){ //cycles < waiting < quantum
+        //   current->status="FINISHED";
+        //   current->end_time = timer;
+        //   finished_p[finished] = current;
+        //   finished++; 
+        //   // printList(queues[j]->head);
+        //   deleteNode(current_node, queues[j]);
+        //   printf("Proceso %s terminado\n", current->name);
+        // }
+        // else { //CEDE LA CPU! waiting < cycles < quantum
+        //   current->first_wait = timer;
+        //   current->cycles = current->cycles - current->wait_left;
+        //   printf("LE QUEDA %d a PROCESO %s, timer=%d\n\n", current->cycles, current->name, timer);
+        //   current->wait_left = current->wait; // wait left se reinicia
+        //   // Si estaba en la cola de mayor prioridad, se queda ahí, sino
+        //   // Subirle a la cola de mayor prioridad
+        //   if (j != 0){ 
+        //     deleteNode(current_node, queues[j]);
+        //     append(queues[j - 1], current);
+        //   } else {
+        //     deleteNode(current_node, queues[j]);
+        //     append(queues[0], current);
+        //   }
+        //   // printList(queues[0]->head);
+        // }
       }
       // ELSE IF DE SI wait_left > quantum
       else if (current->wait_left > queues[j]->quantum){
@@ -418,6 +440,7 @@ int main(int argc, char **argv)
         timer += queues[j]->quantum;
         S_passed += queues[j]->quantum;
         current->total_time_exe += queues[j]->quantum;
+        current->interrupted++;
         if(current->first_wait == -1){
           current->first_wait = timer;
         }
@@ -426,7 +449,6 @@ int main(int argc, char **argv)
           current->status="FINISHED";
           current->cycles = 0;
           current->end_time = timer;
-          // current->interrupted++; 
           finished_p[finished] = current;
           finished++; 
           // printList(queues[j]->head);
@@ -436,7 +458,6 @@ int main(int argc, char **argv)
            // current->wait_left -= queues[j]->quantum;
           current->wait_left = current->wait; // se reinicia
           current->cycles = current->cycles - queues[j]->quantum;
-          current->interrupted++;
           current->status = "WAITING";
           printf("QUANTUM == WAITING: pasa a waiting pero baja de prioridad\n");
           append(queues[j+1], current);
@@ -459,8 +480,12 @@ int main(int argc, char **argv)
       current->cycles = 0;
       finished_p[finished] = current;
       finished++; 
+      if (current->cycles == queues[j]->quantum){
+        current->interrupted++;
+      }
       // printList(queues[j]->head);
       deleteNode(current_node, queues[j]);
+      
     }
 
     // Sino, ejecuta quantum y lo mueven a cola inferior
@@ -472,22 +497,23 @@ int main(int argc, char **argv)
       current->cycles = current->cycles - queues[j]->quantum;
       current->interrupted++;
       // printf("PROCESO %s sumando a interrupted: %i\n", current->name, current->interrupted);
-      append(queues[j+1], current);
+      if (j == Q - 1){
+            append(queues[j], current);
+          } else {
+            append(queues[j+1], current);
+          }
       deleteNode(current_node, queues[j]);
     }
-    // printf("Lista %d", j);
-    // printList(queues[j]->head);
-    // printf("Lista %d", j+1);
-    // printList(queues[j+1]->head);
+    printf("DESPUES:\n cycles %d, quantum %d, wait_left%d\n chosen %d, interrupted %d\n", current->cycles, queues[j]->quantum, current->wait_left, current->chosen, current->interrupted);
     queues = update_waiting(queues, Q, timer);
 
     if (S_passed >= S){
       queues = update_S(queues, Q, S, S_passed);
       S_passed = 0;
     }
-    printf("DESPUES:\n cycles %d, quantum %d, wait_left%d\n chosen %d, interrupted %d\n", current->cycles, queues[j]->quantum, current->wait_left, current->chosen, current->interrupted);
 
   }
+
   // FIN SIMULACIÓN
   printf("TIEMPO FINAL %d\n", timer);
   printf("total: %d\n", total);
