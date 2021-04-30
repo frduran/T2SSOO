@@ -257,6 +257,7 @@ int main(int argc, char **argv)
   int next_S = 0;
   int S_times = 0;
   int deleted = 0;
+  int move = 0; // move =1 baja - move=2 sube
   Node* backup_node = calloc(1,sizeof(Node));
   backup_node->value = 0;
   Node* current_copy;
@@ -269,6 +270,7 @@ int main(int argc, char **argv)
     //   printList(queues[i]->head);
     // }
     deleted = 0;
+    move = 0;
     int j = 0;
     Process* current;
     Node* current_node;
@@ -455,13 +457,14 @@ int main(int argc, char **argv)
           current->wait_left = current->wait; // wait left se reinicia
           // Si estaba en la cola de mayor prioridad, se queda ahí, sino
           // Subirle a la cola de mayor prioridad
-          if (j != 0){ 
-            // deleteNode(current_node, queues[j]);
-            current_copy = append(queues[j - 1], current);
-          } else {
-            // deleteNode(current_node, queues[j]);
-            current_copy = append(queues[0], current);
-          }
+          move = 2;
+          // if (j != 0){ 
+          //   // deleteNode(current_node, queues[j]);
+          //   current_copy = append(queues[j - 1], current);
+          // } else {
+          //   // deleteNode(current_node, queues[j]);
+          //   current_copy = append(queues[0], current);
+          // }
         }
 
         // Si termina, sacarlo de la cola y guardarlo en array de terminados
@@ -523,11 +526,12 @@ int main(int argc, char **argv)
   
           current->cycles -= queues[j]->quantum;
           current->interrupted++;
-          if (j == Q - 1){
-            current_copy = append(queues[j], current);
-          } else {
-            current_copy = append(queues[j+1], current);
-          }
+          move = 1;
+          // if (j == Q - 1){
+          //   current_copy = append(queues[j], current);
+          // } else {
+          //   current_copy = append(queues[j+1], current);
+          // }
           // deleteNode(current_node, queues[j]);
         }
       }
@@ -557,7 +561,8 @@ int main(int argc, char **argv)
           current->cycles = current->cycles - queues[j]->quantum;
           current->status = "WAITING";
           printf("QUANTUM == WAITING: pasa a waiting pero baja de prioridad\n");
-          current_copy = append(queues[j+1], current);
+          move = 1;
+          // current_copy = append(queues[j+1], current);
           // deleteNode(current_node, queues[j]);
         }
        
@@ -597,37 +602,93 @@ int main(int argc, char **argv)
       current->cycles = current->cycles - queues[j]->quantum;
       current->interrupted++;
       // printf("PROCESO %s sumando a interrupted: %i\n", current->name, current->interrupted);
-      if (j == Q - 1){
-            current_copy = append(queues[j], current);
-          } else {
-            current_copy = append(queues[j+1], current);
-          }
+      move = 1;
+      // if (j == Q - 1){
+      //       current_copy = append(queues[j], current);
+      //     } else {
+      //       current_copy = append(queues[j+1], current);
+      //     }
       // deleteNode(current_node, queues[j]);
     }
     printf("DESPUES:\n cycles %d, quantum %d, wait_left%d\n chosen %d, interrupted %d\n", current->cycles, queues[j]->quantum, current->wait_left, current->chosen, current->interrupted);
     queues = update_waiting(queues, Q, timer);
-    
+    Node* next_head = backup->head;
+      if (next_head->value == 1){
+        while(true){
+           if (next_head->process->start_time <= timer){
+             printf("Cabeza %s tiene start time %d\n", next_head->process->name, next_head->process->start_time);
+            current_copy = current_copy = append(queues[0], next_head->process);
+            Node* next_head_copy = next_head;
+            if (next_head->next != NULL){
+              next_head = next_head->next;
+              deleteNode(next_head_copy, backup);
+            }
+            else {
+              deleteNode(next_head, backup);
+              break;
+            }
+          }
+          else {
+            break;
+          }
+        }
+      }
 
     if (S_passed > S){
-      if (deleted == 1)
-        queues = update_S(queues, Q, S, S_passed, backup_node);
-      else {
-        queues = update_S(queues, Q, S, S_passed, current_copy);
-      }
+      queues = update_S(queues, Q, S, S_passed, backup_node);
+      // if (deleted == 1)
+      //   queues = update_S(queues, Q, S, S_passed, backup_node);
+      // else {
+      //   queues = update_S(queues, Q, S, S_passed, current_copy);
+      // }
       next_S = timer - S_passed + S;
       printf("next S");
       S_times++;
       S_passed = timer - S*S_times;
     }
     else if (S_passed == S){
-      if (deleted == 1)
-        queues = update_S(queues, Q, S, S_passed, backup_node);
-      else {
-        queues = update_S(queues, Q, S, S_passed, current_copy);
+      // if (deleted == 1)
+      if (move == 1){
+        if (j == Q - 1){
+          current_copy = append(queues[j], current);
+        } else {
+          current_copy = append(queues[j+1], current);
+        }
       }
+      else if (move == 2){
+        if (j != 0){ 
+          // deleteNode(current_node, queues[j]);
+          current_copy = append(queues[j - 1], current);
+        } else {
+          // deleteNode(current_node, queues[j]);
+          current_copy = append(queues[0], current);
+        }
+      }
+      move = 0;
+      queues = update_S(queues, Q, S, S_passed, backup_node);
+      // else {
+      //   queues = update_S(queues, Q, S, S_passed, current_copy);
+      // }
       S_times++;
       S_passed = 0;
       next_S += S;
+    }
+
+    if (move == 1){
+      if (j == Q - 1){
+        current_copy = append(queues[j], current);
+      } else {
+        current_copy = append(queues[j+1], current);
+      }
+    }
+    else if (move == 2){
+       if (j != 0){ 
+        // deleteNode(current_node, queues[j]);
+        current_copy = append(queues[j - 1], current);
+      } else {
+        // deleteNode(current_node, queues[j]);
+        current_copy = append(queues[0], current);
+      }
     }
 
   }
