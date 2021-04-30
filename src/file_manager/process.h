@@ -80,5 +80,5 @@ fib_node *extract_min(FIB_HEAP *H);
 Node* append(Queue* queue, Process* process);
 void printList(Node* node);
 void deleteHead(Queue* queue);
-void deleteNode(Node* node, Queue* queue);
+Node* deleteNode(Node* node, Queue* queue);
 void sortQueue(Queue* queue);

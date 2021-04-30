@@ -320,7 +320,7 @@ void deleteHead(Queue* queue){
     return;
 }
 
-void deleteNode(Node* node, Queue* queue){
+Node* deleteNode(Node* node, Queue* queue){
   // NO ES EL ÚLTIMO
 
   if (node->next != NULL){
@@ -355,8 +355,8 @@ void deleteNode(Node* node, Queue* queue){
    
     // free(node);
   }
-  free(node);
-  return;
+  //free(node);
+  return node;
 }
 
 void sortQueue(Queue* queue){

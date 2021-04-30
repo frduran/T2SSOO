@@ -10,7 +10,6 @@
 #include "../file_manager/manager.h"
 
 
-/* FALTA INTEGRAR ESCRITURA DE ARCHIVO, SORT  */
 
 // Función que appendea todos los procesos de las colas 1...última a la cola 0, de mayor prioridad
 Queue** update_S(Queue** queues, int total, int S, int S_passed, Node* execute){
@@ -255,6 +254,7 @@ int main(int argc, char **argv)
   int timer = 0;
   int S_passed = 0;
   int S_global = 0;
+  int next_S = 0;
   int S_times = 0;
   int deleted = 0;
   Node* backup_node = calloc(1,sizeof(Node));
@@ -373,7 +373,7 @@ int main(int argc, char **argv)
           
           // Si está en ready y "llegó"
           if (check->process->status == "READY"){// == 0 && timer >= check->process->start_time){
-            current_node = check;
+            current_node = deleteNode(check, queues[j]);
             current = check->process;
             printf("NODE %s IS READY\n", current->name);
             break;
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
           finished_p[finished] = current;
           finished++; 
           deleted =1;
-          deleteNode(current_node, queues[j]);
+          // deleteNode(current_node, queues[j]);
           printf("Proceso %s terminado\n", current->name);
         }
         // Si no, sumar wait_left, cede CPU
@@ -456,10 +456,10 @@ int main(int argc, char **argv)
           // Si estaba en la cola de mayor prioridad, se queda ahí, sino
           // Subirle a la cola de mayor prioridad
           if (j != 0){ 
-            deleteNode(current_node, queues[j]);
+            // deleteNode(current_node, queues[j]);
             current_copy = append(queues[j - 1], current);
           } else {
-            deleteNode(current_node, queues[j]);
+            // deleteNode(current_node, queues[j]);
             current_copy = append(queues[0], current);
           }
         }
@@ -511,7 +511,7 @@ int main(int argc, char **argv)
           finished++; 
           deleted =1;
           // printList(queues[j]->head);
-          deleteNode(current_node, queues[j]);
+          // deleteNode(current_node, queues[j]);
         }
         else if (current->cycles > queues[j]->quantum){  //quantum < waiting < cycles
           timer += queues[j]->quantum;
@@ -528,7 +528,7 @@ int main(int argc, char **argv)
           } else {
             current_copy = append(queues[j+1], current);
           }
-          deleteNode(current_node, queues[j]);
+          // deleteNode(current_node, queues[j]);
         }
       }
       else { //ELSE DE SI quantum == wait_left
@@ -549,7 +549,7 @@ int main(int argc, char **argv)
           finished++; 
           deleted =1;
           // printList(queues[j]->head);
-          deleteNode(current_node, queues[j]);
+          // deleteNode(current_node, queues[j]);
         }
         else {
            // current->wait_left -= queues[j]->quantum;
@@ -558,7 +558,7 @@ int main(int argc, char **argv)
           current->status = "WAITING";
           printf("QUANTUM == WAITING: pasa a waiting pero baja de prioridad\n");
           current_copy = append(queues[j+1], current);
-          deleteNode(current_node, queues[j]);
+          // deleteNode(current_node, queues[j]);
         }
        
       }
@@ -583,7 +583,7 @@ int main(int argc, char **argv)
       finished++; 
       deleted =1;
       // printList(queues[j]->head);
-      deleteNode(current_node, queues[j]);
+      // deleteNode(current_node, queues[j]);
       
     }
 
@@ -602,10 +602,11 @@ int main(int argc, char **argv)
           } else {
             current_copy = append(queues[j+1], current);
           }
-      deleteNode(current_node, queues[j]);
+      // deleteNode(current_node, queues[j]);
     }
     printf("DESPUES:\n cycles %d, quantum %d, wait_left%d\n chosen %d, interrupted %d\n", current->cycles, queues[j]->quantum, current->wait_left, current->chosen, current->interrupted);
     queues = update_waiting(queues, Q, timer);
+    
 
     if (S_passed > S){
       if (deleted == 1)
@@ -613,6 +614,8 @@ int main(int argc, char **argv)
       else {
         queues = update_S(queues, Q, S, S_passed, current_copy);
       }
+      next_S = timer - S_passed + S;
+      printf("next S");
       S_times++;
       S_passed = timer - S*S_times;
     }
@@ -624,6 +627,7 @@ int main(int argc, char **argv)
       }
       S_times++;
       S_passed = 0;
+      next_S += S;
     }
 
   }
