@@ -243,14 +243,6 @@ int main(int argc, char **argv)
     free(extracted);
   }
   free(heap);
-  // printf("backup:\n");
-  // printList(backup->head);
-  // for (int i=0;i<Q;i++){
-  //   printList(queues[i]->head);
-  // }
-  // printList(queues[0]->head);
-  // sortQueue(queues[0]);
-
   int timer = 0;
   int S_passed = 0;
   int S_global = 0;
@@ -262,7 +254,6 @@ int main(int argc, char **argv)
   backup_node->value = 0;
   Node* current_copy;
 
-  //////////////////////////////////////////////////////////////////////////////////////7
   // Ejecutar procesos hasta que todos hayan terminado
   while(finished < total){
     // for (int i=0; i<total; i++){
@@ -276,23 +267,23 @@ int main(int argc, char **argv)
     Node* current_node;
     printf("\n////TIMER: %d, S_passed: %d, SGLOBAL %d\n", timer, S_passed, S_global);
     // Chequear que cola ejecutar
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////
     while(true){
       // Revisar si ya llegó algún proceso e ingresarlo a la cola 0
       Node* next_head = backup->head;
       if (next_head->value == 1){
         while(true){
-           if (next_head->process->start_time <= timer){
+          if (next_head->process->start_time <= timer){
              printf("Cabeza %s tiene start time %d\n", next_head->process->name, next_head->process->start_time);
-            current_copy = current_copy = append(queues[0], next_head->process);
-            Node* next_head_copy = next_head;
+            append(queues[0], next_head->process);
+            // Node* next_head_copy = next_head;
             if (next_head->next != NULL){
               next_head = next_head->next;
-              deleteNode(next_head_copy, backup);
+              deleteNode(backup->head, backup);
+              // free(next_head_copy);
             }
             else {
               deleteNode(next_head, backup);
+              // free(next_head_copy);
               break;
             }
           }
@@ -375,8 +366,8 @@ int main(int argc, char **argv)
           
           // Si está en ready y "llegó"
           if (check->process->status == "READY"){// == 0 && timer >= check->process->start_time){
-            current_node = deleteNode(check, queues[j]);
             current = check->process;
+            deleteNode(check, queues[j]);
             printf("NODE %s IS READY\n", current->name);
             break;
           } 
@@ -617,7 +608,7 @@ int main(int argc, char **argv)
         while(true){
            if (next_head->process->start_time <= timer){
              printf("Cabeza %s tiene start time %d\n", next_head->process->name, next_head->process->start_time);
-            current_copy = current_copy = append(queues[0], next_head->process);
+            current_copy = append(queues[0], next_head->process);
             Node* next_head_copy = next_head;
             if (next_head->next != NULL){
               next_head = next_head->next;
@@ -730,8 +721,16 @@ int main(int argc, char **argv)
     write_output(output_path, args_to_file);
     free(args_to_file);
   }
-  // free(backup_node);
-  // free(backup);
+  free(backup_node);
+  // for (int z = 0; z < total; z++)
+  // {
+  //   Node* next = backup->head->next;
+  //   free(backup->head);
+  //   backup->head = next;
+  // }
+  // free(backup->head->next);
+  free(backup->head);
+  free(backup);
   for (int f = 0; f < total; f++)
     {
       free(finished_p[f]);

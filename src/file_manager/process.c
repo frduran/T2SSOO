@@ -302,20 +302,26 @@ void deleteHead(Queue* queue){
     // free(head);
   if (queue->head->next != NULL){
     if (queue->head->next->value ==1){
-      queue->head = queue->head->next;
-      queue->head->prev = NULL;
+        // free(queue->head->process);
+        // free(queue->head);
+        queue->head = queue->head->next;
+        queue->head->prev = NULL;
       
     }
     else {
-      Node* new_node = calloc(1,sizeof(Node));
-      new_node->value = 0;
-      queue->head = new_node;
+        // free(queue->head->process);
+        // free(queue->head);
+        Node* new_node = calloc(1,sizeof(Node));
+        new_node->value = 0;
+        queue->head = new_node;
     }
   }
   else {
-      Node* new_node = calloc(1,sizeof(Node));
-      new_node->value = 0;
-      queue->head = new_node;
+    // free(queue->head->process);
+    // free(queue->head);
+    Node* new_node = calloc(1,sizeof(Node));
+    new_node->value = 0;
+    queue->head = new_node;
   }
     return;
 }
@@ -329,12 +335,14 @@ Node* deleteNode(Node* node, Queue* queue){
     if (node->prev != NULL){ 
       node->prev->next = node->next;
       node->next->prev = node->prev;
+      free(node);
 
     }
     // O ES LA CABEZA
     else {
       node->next->prev = NULL;
       queue->head = node->next;
+      free(node);
     }
 
     // free(node);
@@ -346,11 +354,15 @@ Node* deleteNode(Node* node, Queue* queue){
     // SI TAMBIEN SOY LA CABEZA, ES DECIR SOY EL UNICO ELEMENTO:
     if (node->prev == NULL){
       Node* new_node = calloc(1,sizeof(Node));
+      // free(node->process);
+      free(node);
       new_node->value = 0;
       queue->head = new_node;
     }
     else {
       node->prev->next = NULL;
+      free(node);
+
     }
    
     // free(node);
