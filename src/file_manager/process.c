@@ -6,21 +6,7 @@
 // Import the header file of this module
 #include "process.h"
 
-// void add_process(Queue* queue, Process* process){
-//     int length = queue->length;
-//     queue->process_queue[length] = process;
-//     queue->length++;
-// }
-
-// void print_queue(Queue* queue){
-//     int length = queue->length;
-//     printf("Queue length %d\n",length);
-//     for (int i=0; i<length; i++){
-//         printf("%s\n", queue->process_queue[i]->name);
-//     }
-// }
-
-// Funciones obtenidas de: https://www.programiz.com/dsa/fibonacci-heap
+// Funciones para fibonacci heap obtenidas de: https://www.programiz.com/dsa/fibonacci-heap
 // Inicializa un fibonacci heap
 FIB_HEAP *make_fib_heap() {
   FIB_HEAP *H;
@@ -31,31 +17,6 @@ FIB_HEAP *make_fib_heap() {
   H->degree = 0;
   return H;
 }
-
-// Printing the heap
-void print_heap(fib_node *n) {
-  fib_node *x;
-  for (x = n;; x = x->right_sibling) {
-    if (x->child == NULL) {
-      printf("node with no child: %s (%d) \n", x->process->name, x->key);
-    } else {
-      printf("fib_node: %s(%d) with child:%s (%d)\n", x->process->name, x->key, x->child->process->name, x->child->key);
-      print_heap(x->child);
-    }
-    if (x->right_sibling == n) {
-      break;
-    }
-  }
-}
-
-// // Imprime la lista ligada, obtenido de https://gist.github.com/ArgiesDario/da409828e81ef441186268b8ee3acd5f
-// void printList(fib_node head){
-//     while(head != NULL){ //Mientras head no sea NULL
-//         printf("%4d",head->process->name); //Imprimimos el valor del nodo
-//         head = head->next; //Pasamos al siguiente nodo
-//     }
-// }
- 
 
 // Inserting nodes
 void insertion(FIB_HEAP *H, fib_node *new, float val) {
@@ -80,7 +41,6 @@ void insertion(FIB_HEAP *H, fib_node *new, float val) {
   }
   (H->n)++;
 }
-
 
 // Linking
 void fib_heap_link(FIB_HEAP *H, fib_node *y, fib_node *x) {
@@ -121,7 +81,7 @@ int cal_degree(int n) {
 void consolidate(FIB_HEAP *H) {
   int degree, i, d;
   degree = cal_degree(H->n);
-  fib_node *A[degree], *x, *y, *z;
+  fib_node *A[degree], *x, *y;
   for (i = 0; i <= degree; i++) {
     A[i] = NULL;
   }
@@ -173,7 +133,6 @@ void consolidate(FIB_HEAP *H) {
   }
 }
 
-
 // Extract min
 fib_node *extract_min(FIB_HEAP *H) {
   if (H->min == NULL)
@@ -213,29 +172,8 @@ fib_node *extract_min(FIB_HEAP *H) {
   }
   return H->min;
 }
-// https://www.geeksforgeeks.org/doubly-linked-list/
-/* Given a reference (pointer to pointer) to the head of a list
-   and an int, inserts a new node on the front of the list. */
-// void push(Node* head, Process* process)
-// {
-//     /* 1. allocate node */
-//     struct Node* new_node = (struct Node*)malloc(sizeof(Node*));
- 
-//     /* 2. put in the data  */
-//     new_node->process = process;
- 
-//     /* 3. Make next of new node as head and previous as NULL */
-//     new_node->next = (head);
-//     new_node->prev = NULL;
- 
-//     /* 4. change prev of head node to new node */
-//     if (head != NULL)
-//         head->prev = new_node;
- 
-//     /* 5. move the head to point to the new node */
-//     head = new_node;
-// }
 
+// https://www.geeksforgeeks.org/doubly-linked-list/
 /* Given a reference (pointer to pointer) to the head
    of a DLL and an int, appends a new node at the end  */
 Node* append(Queue* queue, Process* process)
@@ -270,11 +208,6 @@ Node* append(Queue* queue, Process* process)
  
     /* 6. Change the next of last node */
     last->next = new_node;
-
-    // printf("AQQQQQQ");
-    // Node* new_tail = calloc(1,sizeof(Node));
-    // last->next = new_tail;
-    // last->next->value = 0;
  
     /* 7. Make last node as previous of new node */
     new_node->prev = last;
@@ -289,36 +222,26 @@ void printList(Node* node)
   if (node->value == 1){
     while (node != NULL) {
         printf("%s, STATUS: %s\n", node->process->name, node->process->status);
-        //printf("next value %d ", node->next->value);
         node = node->next;
     }
   } else {
     printf("EMPTY");
   }
-  printf("\n");
 }
 
 void deleteHead(Queue* queue){
-    // free(head);
   if (queue->head->next != NULL){
     if (queue->head->next->value ==1){
-        // free(queue->head->process);
-        // free(queue->head);
         queue->head = queue->head->next;
         queue->head->prev = NULL;
-      
     }
     else {
-        // free(queue->head->process);
-        // free(queue->head);
         Node* new_node = calloc(1,sizeof(Node));
         new_node->value = 0;
         queue->head = new_node;
     }
   }
   else {
-    // free(queue->head->process);
-    // free(queue->head);
     Node* new_node = calloc(1,sizeof(Node));
     new_node->value = 0;
     queue->head = new_node;
@@ -336,7 +259,6 @@ Node* deleteNode(Node* node, Queue* queue){
       node->prev->next = node->next;
       node->next->prev = node->prev;
       free(node);
-
     }
     // O ES LA CABEZA
     else {
@@ -344,11 +266,7 @@ Node* deleteNode(Node* node, Queue* queue){
       queue->head = node->next;
       free(node);
     }
-
-    // free(node);
   }
-
-
   // ES LA COLA
   else {
     // SI TAMBIEN SOY LA CABEZA, ES DECIR SOY EL UNICO ELEMENTO:
@@ -362,12 +280,8 @@ Node* deleteNode(Node* node, Queue* queue){
     else {
       node->prev->next = NULL;
       free(node);
-
     }
-   
-    // free(node);
   }
-  //free(node);
   return node;
 }
 
@@ -379,7 +293,6 @@ void sortQueue(Queue* queue){
     
       if (node2->process->start_time < node1->process->start_time){
         // SWAP
-        printf("SWAP\n");        
         node1 = node2;
         node1->prev = NULL;
         
@@ -389,14 +302,11 @@ void sortQueue(Queue* queue){
 
         node1->next = node2;
         node1_copy = node1;
-        
       }
       else {
-        printf("Está bien, avanzando");
         node1 = node2;
         node2 = node2->next;
         node1_copy = node1;
-
       } 
     }
 }

@@ -55,8 +55,6 @@ typedef struct node {
 typedef struct queue {
   int n;
   Node *head;
-  // int phi;
-  // int degree;
   int Q;
   int priority;
   int p;
